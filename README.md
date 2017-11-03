@@ -1,2 +1,5 @@
-# amazon-rekognition-policing-user-content
-A Stepfunctions driven workflow to use Amazon Rekognition to scan incoming images through a set of business rules and police apply policing
+Amazon Rekognition Policing User Content
+
+## License
+
+This library is licensed under the Apache 2.0 License. 
