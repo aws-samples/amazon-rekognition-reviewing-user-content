@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+
+  StatesExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -  
+            Effect: "Allow"
+            Principal:
+              Service:
+              - !Sub states.${AWS::Region}.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - 
+          PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - 
+                Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+
+  RekLambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -  
+            Effect: "Allow"
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess 
+
+
+
+  RekDetectFaces:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: Rek_DetectFaces.lambda_handler
+        Description: "Lambda function to detect face attributes using Rekognition"
+        Runtime: python2.7
+        FunctionName: Rek_DetectFaces
+        Role: !GetAtt RekLambdaExecutionRole.Arn
+        MemorySize: 128
+        Timeout: 60
+
+  RekRecognizeCelebrities:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_RecognizeCelebrities.lambda_handler
+      Description: "Lambda function which uses Rekognition to detect presence of celebrities"
+      Runtime: python2.7
+      FunctionName: Rek_RecognizeCelebrities
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+
+
+  RekDetectModerationLabels:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_DetectModerationLabels.lambda_handler
+      Description: "Lambda function which uses Rekognition to detect image moderation labels"
+      Runtime: python2.7
+      FunctionName: Rek_DetectModerationLabels
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+
+  RekCheckBlackListDups:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_CheckBlackList_Dups.lambda_handler
+      Description: "A Lambda function to compare the given image against blacklist and duplicate image collections"
+      Runtime: python2.7
+      FunctionName: Rek_CheckBlackList_Dups
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+      Environment:
+        Variables: 
+          BLACKLIST_PREFIX: re:invent2017/RekognitionDemo/BlacklistImages/
+          BLACKLIST_BUCKET: mayankdemo
+
+
+  RekProcessImage:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_ProcessImage.lambda_handler
+      Description: "A Lambda function to add the image to the collection using Rekognition"
+      Runtime: python2.7
+      FunctionName: Rek_ProcessImage
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+
+  RekProcessFailure:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_ProcessFailure.lambda_handler
+      Description: "A Lambda function to process failure routines when the image does not clear of the stages"
+      Runtime: python2.7
+      FunctionName: Rek_ProcessFailure
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+
+  RekProcessIndex:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_ProcessIndex.lambda_handler
+      Description: "A Lambda function to add a record to the elastic search domain"
+      Runtime: python2.7
+      FunctionName: Rek_ProcessIndex
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+      Environment:
+        Variables: 
+          ES_ENDPOINT: search-aws-rekognition-sample-x2n5izdcjduqajxrjbtqu3snde.us-east-1.es.amazonaws.com
+          
+  ReInvent2017RekognitionDemo:
+    Type: "AWS::StepFunctions::StateMachine" 
+    Properties: 
+      DefinitionString:
+        !Sub 
+          - |-
+              {
+                "Comment": "A state machine to automate User Generated Content policing.",
+                "StartAt": "DetectFaces",
+                "States": {
+                  "DetectFaces": {
+                    "Type": "Task",
+                    "Resource": "${Rek_DetectFaces_Arn}",
+                    "Next": "IsFaceProper",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+                  "IsFaceProper": {
+                    "Type": "Choice",
+                    "Choices": [
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": true,
+                          "Next": "CheckForCelebrities"
+                        },
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": false,
+                          "Next": "ProcessFailure"
+                        }
+                      ],
+                      "Default": "ProcessFailure"
+                  },
+                  "CheckForCelebrities": {
+                    "Type": "Task",
+                    "Resource": "${Rek_RecognizeCelebrities_Arn}",
+                    "Next": "IsCelebtrityDetected",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+                  "IsCelebtrityDetected": {
+                    "Type": "Choice",
+                    "Choices": [
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": false,
+                          "Next": "ProcessFailure"
+                        },
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": true,
+                          "Next": "CheckImageModeration"
+                        }
+                      ],
+                      "Default": "ProcessFailure"
+                  },
+
+                  "CheckImageModeration": {
+                    "Type": "Task",
+                    "Resource": "${Rek_DetectModerationLabels_Arn}",
+                    "Next": "IsImageModerated",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+
+                  "IsImageModerated": {
+                    "Type": "Choice",
+                    "Choices": [
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": true,
+                          "Next": "SearchBlackList_Dups"                   
+                        },
+                        {
+                          "Variable": "$.OverallResult.Pass",
+                          "BooleanEquals": false,
+                          "Next": "ProcessFailure"
+                        }
+                      ],
+                      "Default": "ProcessFailure"
+                  },
+                  "SearchBlackList_Dups": {
+                    "Type": "Task",
+                    "Resource": "${Rek_CheckBlackList_Dups_Arn}",
+                    "Next": "CheckBlackList_Dups",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+                  "CheckBlackList_Dups": {
+                    "Type": "Choice",
+                    "Choices": [
+                      {
+                        "Variable": "$.OverallResult.Pass",
+                        "BooleanEquals": true,
+                        "Next": "ProcessSuccess"
+                      },
+                      {
+                        "Variable": "$.OverallResult.Pass",
+                        "BooleanEquals": false,
+                        "Next": "ProcessFailure"
+                      }
+                      ],
+                      "Default": "ProcessFailure"
+                  },
+                  "ProcessFailure": {
+                    "Type": "Task",
+                    "Next": "IndexImage",
+                    "Resource": "${Rek_ProcessFailure_Arn}",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+                  "ProcessSuccess": {
+                    "Type": "Task",
+                    "Resource": "${Rek_ProcessImage_Arn}",
+                    "Next": "IndexImage",
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  },
+
+                  "IndexImage": {
+                    "Type": "Task",
+                    "Resource": "${Rek_ProcessIndex_Arn}",
+                    "End": true,
+                    "InputPath": "$",
+                    "ResultPath": "$",
+                    "OutputPath": "$"
+                  }
+                }
+              }
+          - {Rek_DetectFaces_Arn: !GetAtt [ RekDetectFaces, Arn ], Rek_RecognizeCelebrities_Arn: !GetAtt [ RekRecognizeCelebrities, Arn ],Rek_DetectModerationLabels_Arn: !GetAtt [ RekDetectModerationLabels, Arn ],Rek_CheckBlackList_Dups_Arn: !GetAtt [ RekCheckBlackListDups, Arn ],Rek_ProcessFailure_Arn: !GetAtt [ RekProcessFailure, Arn ],Rek_ProcessImage_Arn: !GetAtt [ RekProcessImage, Arn ],Rek_ProcessIndex_Arn: !GetAtt [ RekProcessIndex, Arn ]}
+      RoleArn: !GetAtt [ StatesExecutionRole, Arn ] 

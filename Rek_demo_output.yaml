@@ -1,0 +1,235 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  ReInvent2017RekognitionDemo:
+    Properties:
+      DefinitionString:
+        Fn::Sub:
+        - "{\n  \"Comment\": \"A state machine to automate User Generated Content\
+          \ policing.\",\n  \"StartAt\": \"DetectFaces\",\n  \"States\": {\n    \"\
+          DetectFaces\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"${Rek_DetectFaces_Arn}\"\
+          ,\n      \"Next\": \"IsFaceProper\",\n      \"InputPath\": \"$\",\n    \
+          \  \"ResultPath\": \"$\",\n      \"OutputPath\": \"$\"\n    },\n    \"IsFaceProper\"\
+          : {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n          {\n  \
+          \          \"Variable\": \"$.OverallResult.Pass\",\n            \"BooleanEquals\"\
+          : true,\n            \"Next\": \"CheckForCelebrities\"\n          },\n \
+          \         {\n            \"Variable\": \"$.OverallResult.Pass\",\n     \
+          \       \"BooleanEquals\": false,\n            \"Next\": \"ProcessFailure\"\
+          \n          }\n        ],\n        \"Default\": \"ProcessFailure\"\n   \
+          \ },\n    \"CheckForCelebrities\": {\n      \"Type\": \"Task\",\n      \"\
+          Resource\": \"${Rek_RecognizeCelebrities_Arn}\",\n      \"Next\": \"IsCelebtrityDetected\"\
+          ,\n      \"InputPath\": \"$\",\n      \"ResultPath\": \"$\",\n      \"OutputPath\"\
+          : \"$\"\n    },\n    \"IsCelebtrityDetected\": {\n      \"Type\": \"Choice\"\
+          ,\n      \"Choices\": [\n          {\n            \"Variable\": \"$.OverallResult.Pass\"\
+          ,\n            \"BooleanEquals\": false,\n            \"Next\": \"ProcessFailure\"\
+          \n          },\n          {\n            \"Variable\": \"$.OverallResult.Pass\"\
+          ,\n            \"BooleanEquals\": true,\n            \"Next\": \"CheckImageModeration\"\
+          \n          }\n        ],\n        \"Default\": \"ProcessFailure\"\n   \
+          \ },\n\n    \"CheckImageModeration\": {\n      \"Type\": \"Task\",\n   \
+          \   \"Resource\": \"${Rek_DetectModerationLabels_Arn}\",\n      \"Next\"\
+          : \"IsImageModerated\",\n      \"InputPath\": \"$\",\n      \"ResultPath\"\
+          : \"$\",\n      \"OutputPath\": \"$\"\n    },\n\n    \"IsImageModerated\"\
+          : {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n          {\n  \
+          \          \"Variable\": \"$.OverallResult.Pass\",\n            \"BooleanEquals\"\
+          : true,\n            \"Next\": \"SearchBlackList_Dups\"                \
+          \   \n          },\n          {\n            \"Variable\": \"$.OverallResult.Pass\"\
+          ,\n            \"BooleanEquals\": false,\n            \"Next\": \"ProcessFailure\"\
+          \n          }\n        ],\n        \"Default\": \"ProcessFailure\"\n   \
+          \ },\n    \"SearchBlackList_Dups\": {\n      \"Type\": \"Task\",\n     \
+          \ \"Resource\": \"${Rek_CheckBlackList_Dups_Arn}\",\n      \"Next\": \"\
+          CheckBlackList_Dups\",\n      \"InputPath\": \"$\",\n      \"ResultPath\"\
+          : \"$\",\n      \"OutputPath\": \"$\"\n    },\n    \"CheckBlackList_Dups\"\
+          : {\n      \"Type\": \"Choice\",\n      \"Choices\": [\n        {\n    \
+          \      \"Variable\": \"$.OverallResult.Pass\",\n          \"BooleanEquals\"\
+          : true,\n          \"Next\": \"ProcessSuccess\"\n        },\n        {\n\
+          \          \"Variable\": \"$.OverallResult.Pass\",\n          \"BooleanEquals\"\
+          : false,\n          \"Next\": \"ProcessFailure\"\n        }\n        ],\n\
+          \        \"Default\": \"ProcessFailure\"\n    },\n    \"ProcessFailure\"\
+          : {\n      \"Type\": \"Task\",\n      \"Next\": \"IndexImage\",\n      \"\
+          Resource\": \"${Rek_ProcessFailure_Arn}\",\n      \"InputPath\": \"$\",\n\
+          \      \"ResultPath\": \"$\",\n      \"OutputPath\": \"$\"\n    },\n   \
+          \ \"ProcessSuccess\": {\n      \"Type\": \"Task\",\n      \"Resource\":\
+          \ \"${Rek_ProcessImage_Arn}\",\n      \"Next\": \"IndexImage\",\n      \"\
+          InputPath\": \"$\",\n      \"ResultPath\": \"$\",\n      \"OutputPath\"\
+          : \"$\"\n    },\n\n    \"IndexImage\": {\n      \"Type\": \"Task\",\n  \
+          \    \"Resource\": \"${Rek_ProcessIndex_Arn}\",\n      \"End\": true,\n\
+          \      \"InputPath\": \"$\",\n      \"ResultPath\": \"$\",\n      \"OutputPath\"\
+          : \"$\"\n    }\n  }\n}"
+        - Rek_CheckBlackList_Dups_Arn:
+            Fn::GetAtt:
+            - RekCheckBlackListDups
+            - Arn
+          Rek_DetectFaces_Arn:
+            Fn::GetAtt:
+            - RekDetectFaces
+            - Arn
+          Rek_DetectModerationLabels_Arn:
+            Fn::GetAtt:
+            - RekDetectModerationLabels
+            - Arn
+          Rek_ProcessFailure_Arn:
+            Fn::GetAtt:
+            - RekProcessFailure
+            - Arn
+          Rek_ProcessImage_Arn:
+            Fn::GetAtt:
+            - RekProcessImage
+            - Arn
+          Rek_ProcessIndex_Arn:
+            Fn::GetAtt:
+            - RekProcessIndex
+            - Arn
+          Rek_RecognizeCelebrities_Arn:
+            Fn::GetAtt:
+            - RekRecognizeCelebrities
+            - Arn
+      RoleArn:
+        Fn::GetAtt:
+        - StatesExecutionRole
+        - Arn
+    Type: AWS::StepFunctions::StateMachine
+  RekCheckBlackListDups:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: A Lambda function to compare the given image against blacklist
+        and duplicate image collections
+      Environment:
+        Variables:
+          BLACKLIST_BUCKET: mayankdemo
+          BLACKLIST_PREFIX: re:invent2017/RekognitionDemo/BlacklistImages/
+      FunctionName: Rek_CheckBlackList_Dups
+      Handler: Rek_CheckBlackList_Dups.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekDetectFaces:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: Lambda function to detect face attributes using Rekognition
+      FunctionName: Rek_DetectFaces
+      Handler: Rek_DetectFaces.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekDetectModerationLabels:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: Lambda function which uses Rekognition to detect image moderation
+        labels
+      FunctionName: Rek_DetectModerationLabels
+      Handler: Rek_DetectModerationLabels.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekLambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess
+      Path: /
+    Type: AWS::IAM::Role
+  RekProcessFailure:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: A Lambda function to process failure routines when the image does
+        not clear of the stages
+      FunctionName: Rek_ProcessFailure
+      Handler: Rek_ProcessFailure.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekProcessImage:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: A Lambda function to add the image to the collection using Rekognition
+      FunctionName: Rek_ProcessImage
+      Handler: Rek_ProcessImage.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekProcessIndex:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: A Lambda function to add a record to the elastic search domain
+      Environment:
+        Variables:
+          ES_ENDPOINT: search-aws-rekognition-sample-x2n5izdcjduqajxrjbtqu3snde.us-east-1.es.amazonaws.com
+      FunctionName: Rek_ProcessIndex
+      Handler: Rek_ProcessIndex.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RekRecognizeCelebrities:
+    Properties:
+      CodeUri: s3://rekdemo2017a/23569e50c7cad2d5db67f0fbe2e22eae
+      Description: Lambda function which uses Rekognition to detect presence of celebrities
+      FunctionName: Rek_RecognizeCelebrities
+      Handler: Rek_RecognizeCelebrities.lambda_handler
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - RekLambdaExecutionRole
+        - Arn
+      Runtime: python2.7
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  StatesExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - Fn::Sub: states.${AWS::Region}.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - lambda:InvokeFunction
+            Effect: Allow
+            Resource: '*'
+          Version: '2012-10-17'
+        PolicyName: StatesExecutionPolicy
+    Type: AWS::IAM::Role
+Transform: AWS::Serverless-2016-10-31

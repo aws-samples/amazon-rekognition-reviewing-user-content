@@ -1,0 +1,5 @@
+aws s3 mb s3://rekdemo2017 --region us-west-2
+
+aws cloudformation package --template-file Rek_Demo.yaml --output-template-file Rek_demo_output.yaml --s3-bucket rekdemo2017
+
+aws cloudformation deploy --region us-west-2 --template-file Rek_demo_output.yaml --stack-name RekDemoStack --capabilities CAPABILITY_IAM

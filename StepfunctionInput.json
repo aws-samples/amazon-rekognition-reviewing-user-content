@@ -1,0 +1,11 @@
+{
+  "Params" : {
+  	"Bucket": "mayankdemo",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/person3.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
