@@ -4,6 +4,8 @@ import boto3
 import datetime
 import json
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+import requests
+from requests_aws4auth import AWS4Auth
 
 import urllib
 import json
@@ -44,14 +46,19 @@ indexDoc = {
 
 
 def connectES(esEndPoint):
-    print ('Connecting to the ES Endpoint {0}'.format(esEndPoint))
+    #print ('Connecting to the ES Endpoint {0}'.format(esEndPoint))
     try:
-        print (esEndPoint)
+        # print (esEndPoint)
+        # Use AWS4Auth for signing the requst to ES. This is required since the Lambda function is operating under an IAM role.
+        # please note, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION and AWS_SESSION_TOKEN environment variables are available to all Lambda functions.
+        auth = AWS4Auth(os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'],
+                        os.environ['AWS_REGION'], 'es', session_token=os.environ['AWS_SESSION_TOKEN'])
         esClient = Elasticsearch(
             hosts=[{'host': esEndPoint, 'port': 443}],
             use_ssl=True,
-            verify_certs=True,
-            connection_class=RequestsHttpConnection)
+            # verify_certs=True,
+            connection_class=RequestsHttpConnection,
+            http_auth=auth)
         return esClient
     except Exception as E:
         print("Unable to connect to {0}".format(esEndPoint))
