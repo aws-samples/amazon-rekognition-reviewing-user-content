@@ -2,3 +2,17 @@
 lib/certifi-2017.7.27.1.dist-info/DESCRIPTION.rst
 
 lib/
+code/certifi-2017.7.27.1.dist-info/
+
+code/certifi/
+
+code/chardet-3.0.4.dist-info/
+code/chardet/
+code/elasticsearch-5.4.0.dist-info/
+code/elasticsearch/
+code/idna-2.6.dist-info/
+code/idna/
+code/requests-2.18.4.dist-info/
+code/requests/
+code/urllib3-1.22.dist-info/
+code/urllib3/
