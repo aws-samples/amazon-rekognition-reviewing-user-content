@@ -40,12 +40,47 @@ Resources:
               - lambda.amazonaws.com
             Action: "sts:AssumeRole"
       Path: "/"
+      Policies: 
+        - 
+          PolicyName: "AccessES"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - 
+                Effect: "Allow"
+                Action: "es:*"
+                Resource: !GetAtt ElasticsearchDomain.DomainArn
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess 
 
-
+  ElasticsearchDomain: 
+    Type: "AWS::Elasticsearch::Domain"
+    Properties:
+      DomainName: "aws-rekognition-sample"
+      ElasticsearchVersion: "5.5"
+      ElasticsearchClusterConfig: 
+        InstanceCount: "1"
+        InstanceType: "m4.large.elasticsearch"
+        ZoneAwarenessEnabled: "false"
+      EBSOptions: 
+        EBSEnabled: "true"
+        VolumeSize: 35
+        VolumeType: "gp2"
+      SnapshotOptions: 
+        AutomatedSnapshotStartHour: "0"
+      AccessPolicies: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "es:*"
+            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/aws-rekognition-sample/*"
+      AdvancedOptions: 
+        rest.action.multi.allow_explicit_index: "true"
 
   RekDetectFaces:
       Type: AWS::Serverless::Function
@@ -131,7 +166,7 @@ Resources:
       Timeout: 60
       Environment:
         Variables: 
-          ES_ENDPOINT: search-aws-rekognition-sample-x2n5izdcjduqajxrjbtqu3snde.us-east-1.es.amazonaws.com
+          ES_ENDPOINT: !GetAtt ElasticsearchDomain.DomainEndpoint
           
   ReInvent2017RekognitionDemo:
     Type: "AWS::StepFunctions::StateMachine" 
