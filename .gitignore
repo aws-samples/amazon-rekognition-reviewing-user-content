@@ -2,8 +2,7 @@
 lib/certifi-2017.7.27.1.dist-info/DESCRIPTION.rst
 
 lib/
-code/certifi-2017.7.27.1.dist-info/
-
+code/certifi-2017.11.5.dist-info/
 code/certifi/
 
 code/chardet-3.0.4.dist-info/
@@ -16,3 +15,6 @@ code/requests-2.18.4.dist-info/
 code/requests/
 code/urllib3-1.22.dist-info/
 code/urllib3/
+code/requests_aws4auth-0.9.dist-info/
+code/requests_aws4auth/
+code/Rek_demo_output.yaml
