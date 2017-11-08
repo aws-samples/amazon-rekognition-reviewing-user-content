@@ -81,8 +81,8 @@ def indexDocElement(esClient, imageMetaData):
             'createdDate': datetime.datetime.now(),
             'objectKey': imageMetaData['Params']['Key'],
             'objectBucket': imageMetaData['Params']['Bucket'],
-            'overallResult': imageMetaData['Pass'],
-            'reason': imageMetaData['Reason']}
+            'overallResult': imageMetaData['OverallResult']['Pass'],
+            'reason': imageMetaData['OverallResult']['Reason']}
         print (metadataBody)
         retval = esClient.index(
             index='image-metadata-store', doc_type='images', body=metadataBody)
