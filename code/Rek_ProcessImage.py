@@ -48,6 +48,7 @@ def lambda_handler(event, context):
     }
     try:
 
+        #Uncomment the delete code to clear off the Imagelist collection and start off fresh.
         # try:
         #     # delete collections.
         #     rekognition.delete_collection(CollectionId ='ImageList')

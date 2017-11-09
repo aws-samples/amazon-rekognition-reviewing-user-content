@@ -13,8 +13,6 @@ s3 = boto3.client('s3')
 
 blacklist_bucket = os.environ['BLACKLIST_BUCKET']
 blacklist_prefix = urllib.unquote_plus(os.environ['BLACKLIST_PREFIX'].encode('utf8')) 
-# blacklist_bucket = 'mayankdemo'
-# blacklist_prefix = 're%3Ainvent2017/RekognitionDemo/BlacklistImages'
 
 # --------------- Helper Functions to call Rekognition APIs ------------------
 
