@@ -1,6 +1,6 @@
 {
   "Params" : {
-  	"Bucket": "mayankdemo",
+  	"Bucket": "mayankdemo-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/person3.jpg"
 },
 "OverallResult" : {
