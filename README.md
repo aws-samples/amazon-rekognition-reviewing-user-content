@@ -23,7 +23,7 @@ The following checks are implemented as a part of this workflow:
     * Fail if the image is already uploaded by somebody else
     * Fail if the image matches a custom black list that you maintain
 
-# Deployment 
+# Deployment and Execution
 
 ## Instructions
 This code depends on a bunch of libraries (not included in this distribution) which you will have to install yourself. We will be using AWS CLI as well.
@@ -31,14 +31,24 @@ This code depends on a bunch of libraries (not included in this distribution) wh
 1. Download the contents of this repository on your local machine (say: project-directory)
 2. The solution is implemented in python, so make sure you can run python on your local machine.
 3. Open a command prompt, navigate to the project directory and install the following libraries in the same directory (project-directory)
-    1. ```pip install requests_aws4auth --target .```
-    2. ```pip install elasticsearch --target .```
+    1. ```bash
+        pip install requests_aws4auth --target .
+        ```
+    2. ``` bash
+        pip install elasticsearch --target .
+        ```
 4. Create a S3 bucket for deployment (note: use the same region throughout the following steps, I have used us-east-2, you can replace it with the region of your choice. Refer to the [region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for service availability.)
-    1. ```aws s3 mb s3://rekdemo2017 --region us-west-2```
+    1. ```bash
+        aws s3 mb s3://rekdemo2017 --region us-west-2
+        ```
 5. Package the contents and prepare deployment package using the following command
-    1. ```aws cloudformation package --template-file Rek_Demo.yaml --output-template-file Rek_demo_output.yaml --s3-bucket rekdemo2017 --region us-west-2```
+    1. ```bash
+        aws cloudformation package --template-file Rek_Demo.yaml --output-template-file Rek_demo_output.yaml --s3-bucket rekdemo2017 --region us-west-2
+        ```
 6. Deploy the package
-    1. ```aws cloudformation deploy --template-file Rek_demo_output.yaml --stack-name RekDemoStack --capabilities CAPABILITY_IAM --region us-west-2```
+    1. ```bash 
+        aws cloudformation deploy --template-file Rek_demo_output.yaml --stack-name RekDemoStack --capabilities CAPABILITY_IAM --region us-west-2
+        ```
 
 
 ## Outputs
@@ -46,9 +56,10 @@ Following are the outputs from the SAM template
 
 1. **Elasticsearch Domain and Kibana endpoints:** You can use these endpoints to view the statistics about the uploaded images. Please note, you might have to modify the access policies for your ES instance, to allow access. Blog [here](https://aws.amazon.com/blogs/database/set-access-control-for-amazon-elasticsearch-service/).
 
+## Execution
+ TBD
+
 # Code Walkthrough
-
-
 
 ## Step functions flow (success)
 
