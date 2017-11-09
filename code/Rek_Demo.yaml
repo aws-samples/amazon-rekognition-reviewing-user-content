@@ -49,7 +49,7 @@ Resources:
               - 
                 Effect: "Allow"
                 Action: "es:*"
-                Resource: !GetAtt ElasticsearchDomain.DomainArn
+                Resource: !Join ["", [!GetAtt ElasticsearchDomain.DomainArn, "/*" ]]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
