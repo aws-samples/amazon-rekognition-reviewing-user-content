@@ -7,7 +7,6 @@ from elasticsearch import Elasticsearch, RequestsHttpConnection
 import requests
 from requests_aws4auth import AWS4Auth
 
-import urllib
 import json
 import os
 
@@ -46,7 +45,7 @@ indexDoc = {
 
 
 def connectES(esEndPoint):
-    #print ('Connecting to the ES Endpoint {0}'.format(esEndPoint))
+    print ('Connecting to the ES Endpoint {0}...'.format(esEndPoint))
     try:
         # print (esEndPoint)
         # Use AWS4Auth for signing the requst to ES. This is required since the Lambda function is operating under an IAM role.
@@ -56,13 +55,15 @@ def connectES(esEndPoint):
         esClient = Elasticsearch(
             hosts=[{'host': esEndPoint, 'port': 443}],
             use_ssl=True,
-            # verify_certs=True,
+            verify_certs=True,
             connection_class=RequestsHttpConnection,
             http_auth=auth)
+        print('Connection successful.')
         return esClient
     except Exception as E:
         print("Unable to connect to {0}".format(esEndPoint))
-        print(E)
+        print("Error: ", E)
+        return None
         # exit(3)
 
 
@@ -74,29 +75,32 @@ def createIndex(esClient):
         if res is False:
             print('Creating index image-metadata-store')
             esClient.indices.create('image-metadata-store', body=indexDoc)
-            return 1
+        return True
     except Exception as E:
-        print("Unable to Create Index {0}".format("image-metadata-store"))
-        print(E)
+        print("Unable to Create/access Index {0}".format("image-metadata-store"))
+        print("Error: ", E)
+        return False
         # exit(4)
 
 
 def indexDocElement(esClient, imageMetaData):
     try:
-        print('Indexing document')
+        print('Indexing document...')
         metadataBody = {
             'createdDate': datetime.datetime.now(),
             'objectKey': imageMetaData['Params']['Key'],
             'objectBucket': imageMetaData['Params']['Bucket'],
             'overallResult': imageMetaData['OverallResult']['Pass'],
             'reason': imageMetaData['OverallResult']['Reason']}
-        print (metadataBody)
-        retval = esClient.index(
+        #print (metadataBody)
+        esClient.index(
             index='image-metadata-store', doc_type='images', body=metadataBody)
-        print(retval)
+        print('Document Indexed successfully.')
+        return True
     except Exception as E:
         print("Document not indexed")
         print("Error: ", E)
+        return False
         # exit(5)
 
 
@@ -104,19 +108,17 @@ def lambda_handler(event, context):
 
     #print("Received event: " + json.dumps(event, indent=2))
     #print (event)
-
-    # Get the object from the event
-    bucket = event['Params']['Bucket']
-    key = urllib.unquote_plus(event['Params']['Key'].encode('utf8'))
-
-    esClient = connectES(es_conn_string)
-    createIndex(esClient)
-
+    
     try:
-        response = s3.get_object(Bucket=bucket, Key=key)
-        indexDocElement(esClient, event)
-        return True
+        esClient = connectES(es_conn_string)
+        if esClient is not None:
+            if createIndex(esClient) is True:
+                return indexDocElement(esClient, event)
+            else:
+                return False
+        else:
+             return False
     except Exception as e:
         print(e)
-        print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
+        print("Error: ", e)
         raise e
