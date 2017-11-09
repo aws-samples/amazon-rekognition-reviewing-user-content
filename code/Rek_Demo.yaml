@@ -305,3 +305,13 @@ Resources:
               }
           - {Rek_DetectFaces_Arn: !GetAtt [ RekDetectFaces, Arn ], Rek_RecognizeCelebrities_Arn: !GetAtt [ RekRecognizeCelebrities, Arn ],Rek_DetectModerationLabels_Arn: !GetAtt [ RekDetectModerationLabels, Arn ],Rek_CheckBlackList_Dups_Arn: !GetAtt [ RekCheckBlackListDups, Arn ],Rek_ProcessFailure_Arn: !GetAtt [ RekProcessFailure, Arn ],Rek_ProcessImage_Arn: !GetAtt [ RekProcessImage, Arn ],Rek_ProcessIndex_Arn: !GetAtt [ RekProcessIndex, Arn ]}
       RoleArn: !GetAtt [ StatesExecutionRole, Arn ] 
+
+Outputs:
+  ElasticsearchDomainEndPoint:
+    Description: The Domain endpoint of the ElasticSearch service instance
+    Value: !Join ["", ["https://", !GetAtt ElasticsearchDomain.DomainEndpoint]]
+  ElasticsearchDomainKibanaEndPoint:
+    Description: The Domain endpoint for accesing Kibana on the ES service endpoint
+    Value: !Join ["", ["https://", !GetAtt ElasticsearchDomain.DomainEndpoint, "/_plugin/kibana/" ]]
+
+    
