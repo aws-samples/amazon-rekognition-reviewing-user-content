@@ -4,7 +4,7 @@ A Stepfunctions driven workflow to use Amazon Rekognition to scan incoming image
 
 # Solution Architecture
 
-![Solution Architecture](images/Solution Architecture.png)
+![Solution Architecture](images/Solution-Architecture.png)
 
 Images can be captured by a camera (or a mobile device) and uploaded to S3. The image capture mechanism can be a website too. Once the image lands on the S3 bucket, the step functions flow can be triggered using a S3 event + Lambda (The S3 event triggering code is not included in this repository).
 Step functions then executes a series of checks with Amazon Rekognition and builds a json template of its findings, as it progresses through the workflow. The process is successful if all the steps succeed and unsuccessful if any of them fails. The results are logged into Amazon Elasticsearch service and you use Kibana to visualize the results.
