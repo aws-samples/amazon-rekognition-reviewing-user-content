@@ -33,10 +33,10 @@ def create_collections():
        
     # Create a blacklist collection
     if not doesBlackListImagesExist:
-        print('Creating collection : BlackListImages')
+        print('Creating collection : BlackListImages...')
         rekognition.create_collection(CollectionId='BlackListImages')
         # Add BlackList Images
-        print('Adding BlackList Images')
+        print('Adding BlackList Images..')
         imageList = s3.list_objects_v2(
             Bucket=blacklist_bucket, Prefix=blacklist_prefix)
         #print(imageList)
@@ -115,6 +115,7 @@ def lambda_handler(event, context):
         # try:
         #     # delete collections.
         #     rekognition.delete_collection(CollectionId ='BlackListImages')
+        #     rekognition.delete_collection(CollectionId ='ImageList')
 
         # except Exception as e: 
         #     print ('Error deleting collections.')
