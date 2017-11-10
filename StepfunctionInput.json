@@ -1,7 +1,83 @@
+/*Test 1*/
 {
   "Params" : {
   	"Bucket": "mayankdemo-us-west-2",
-    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/person3.jpg"
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/silhouette-of-a-man.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
+
+
+/*Test 2*/
+
+{
+  "Params" : {
+  	"Bucket": "mayankdemo-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/Les_Twins_profile.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
+
+/*Test 3*/
+
+{
+  "Params" : {
+  	"Bucket": "mayankdemo-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/baby-tears.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
+
+
+
+
+/*Test 4*/
+
+{
+  "Params" : {
+  	"Bucket": "mayankdemo-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/tom-cruise.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
+
+/*Test 5*/
+
+{
+  "Params" : {
+  	"Bucket": "mayankdemo-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/barbie1.jpg"
+},
+"OverallResult" : {
+        "Pass" : "True",
+        "Reason" : "",
+        "Details" : []
+	}
+}
+
+
+/*Test 6*/
+
+{
+  "Params" : {
+  	"Bucket": "mayankdemo-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/person1.jpg"
 },
 "OverallResult" : {
         "Pass" : "True",
