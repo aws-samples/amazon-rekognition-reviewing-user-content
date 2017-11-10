@@ -1,13 +1,20 @@
 from __future__ import print_function
 
+import boto3
+from decimal import Decimal
 import json
 import urllib
-import boto3
+import os
 
 print('Loading function')
 
-s3 = boto3.client('s3')
 rekognition = boto3.client('rekognition')
+s3 = boto3.client('s3')
+
+blacklist_bucket = os.environ['BLACKLIST_BUCKET']
+blacklist_prefix = urllib.unquote_plus(os.environ['BLACKLIST_PREFIX'].encode('utf8')) 
+
+# --------------- Helper Functions to call Rekognition APIs ------------------
 
 
 def create_collections():
@@ -23,38 +30,107 @@ def create_collections():
             doesBlackListImagesExist = True
         if(collectionId == 'ImageList'):
             doesImageListExist = True
-
+       
     # Create a blacklist collection
     if not doesBlackListImagesExist:
-        print('Creating collection : BlackListImages')
+        #print('Creating collection : BlackListImages')
         rekognition.create_collection(CollectionId='BlackListImages')
+        # Add BlackList Images
+        #print('Adding BlackList Images')
+        imageList = s3.list_objects_v2(
+            Bucket=blacklist_bucket, Prefix=blacklist_prefix)
+        #print(imageList)
+        for image in imageList['Contents']:
+            if(image['Size'] == 0):
+                continue
+            #print('Adding ' + blacklist_bucket + '/' + image['Key'])
+            rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
+                "Bucket": blacklist_bucket, "Name": image['Key']}})
 
-    # Create a collection to store and Index faces
+    # Create a image collection
     if not doesImageListExist:
         print('Creating collection : ImageList')
         rekognition.create_collection(CollectionId='ImageList')
-
     return None
 
 
-def lambda_handler(event, context):
-    print("Received event: " + json.dumps(event, indent=2))
+def check_Blacklist_Duplicates(bucket, key, inputParams):
 
-    # Get the object from the event and show its content type
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.unquote_plus(
-        event['Records'][0]['s3']['object']['key'].encode('utf8'))
+    returnResult = {
+        'Stage' : 'CheckBlackList_Dups',
+        'Pass': True,
+        'ErrorMessages': []
+    }
+    
+    blackListMatchDetected = False
+    duplicateMatchDetected = False
+    # Check in the blackList first
+    #print ('Checking BlackList')
+    response = rekognition.search_faces_by_image(
+        CollectionId='BlackListImages', Image={"S3Object": {"Bucket": bucket, "Name": key}}, MaxFaces=1)
+    # print(response)
+    # Check for at least one face returned
+    if (response.get('FaceMatches') is not None and len(response['FaceMatches']) > 0):
+        blackListMatchDetected = True
+        returnResult['Pass'] = False
+        returnResult['ErrorMessages'].append('Blacklist Match Detected.')
+    #print ('blackListMatchDetected = {}'.format(blackListMatchDetected))
+
+    if not blackListMatchDetected:
+        # Check in our image collection, for duplicates
+        #print ('Checking Duplicates')
+        response = rekognition.search_faces_by_image(
+            CollectionId='ImageList', Image={"S3Object": {"Bucket": bucket, "Name": key}}, MaxFaces=1, FaceMatchThreshold = 10)
+
+        # print(response)
+        if (response.get('FaceMatches') is not None and response['FaceMatches']):
+            duplicateMatchDetected = True
+            returnResult['Pass'] = False
+            returnResult['ErrorMessages'].append('Duplicate Image Detected.')
+        #print ('duplicateMatchDetected = {}'.format(duplicateMatchDetected))
+
+    # process overall result
+    inputParams['OverallResult']['Details'].append(returnResult)
+    inputParams['OverallResult']['Pass'] = inputParams['OverallResult']['Pass'] and returnResult['Pass'] 
+    if (returnResult['Pass'] is False):
+        inputParams['OverallResult']['Reason'] = 'BLACKLIST_DUPS_DETECTED'
+    else:
+        inputParams['OverallResult']['Reason'] = ''
+
+    return inputParams
+
+
+# --------------- Main handler ------------------
+
+
+def lambda_handler(event, context):
+
+    #print("Received event: " + json.dumps(event, indent=2))
+
+    # Get the object from the event
+    bucket = event['Params']['Bucket']
+    key = urllib.unquote_plus(event['Params']['Key'].encode('utf8'))
     try:
 
-         # Create image collections.
+        # For testing use only. Keep this section commented.
+        # try:
+        # # delete collections.
+        #     rekognition.delete_collection(CollectionId ='BlackListImages')
+        #     rekognition.delete_collection(CollectionId ='ImageList')
+        # except Exception as e: 
+        #     print ('Error deleting collections.')
+
+        # Create image collections.
         create_collections()
 
-         # Add BlackList Images
-        response = rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
-            "Bucket": bucket, "Name": key}})
-        print('Image {} added to Blacklist collection'.format(key))
+        response = check_Blacklist_Duplicates(bucket, key, event)
+
+        # Print response to console.
+        # print(response)
+
         return response
     except Exception as e:
         print(e)
-        print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
+        print("Error processing object {} from bucket {}. ".format(key, bucket) +
+              "Make sure your object and bucket exist and your bucket is in the same region as this function.")
         raise e
