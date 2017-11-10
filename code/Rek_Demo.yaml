@@ -53,7 +53,12 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess 
+        - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess
+
+  RekS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub mayankdemo1-${AWS::Region}
 
   ElasticsearchDomain: 
     Type: "AWS::Elasticsearch::Domain"
@@ -128,8 +133,34 @@ Resources:
       Timeout: 60
       Environment:
         Variables: 
-          BLACKLIST_PREFIX: re:invent2017/RekognitionDemo/BlacklistImages/
-          BLACKLIST_BUCKET: mayankdemo
+          BLACKLIST_PREFIX: reInvent2017/RekognitionDemo/BlacklistImages/
+          BLACKLIST_BUCKET: !Ref RekS3Bucket
+
+  RekUpdateBlackList:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Rek_UpdateBlacklist.lambda_handler
+      Description: "A Lambda function, which will be triggered from an S3 event and adds the image to the image blacklist."
+      Runtime: python2.7
+      FunctionName: Rek_UpdateBlacklist
+      Role: !GetAtt RekLambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 60
+      Events:
+        PhotoUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref RekS3Bucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  -
+                    Name: prefix
+                    Value: reInvent2017/RekognitionDemo/BlacklistImages/
+                  -
+                    Name: suffix
+                    Value: jpg
 
 
   RekProcessImage:
