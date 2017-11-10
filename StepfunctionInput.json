@@ -1,7 +1,7 @@
 /*Test 1*/
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
+  	"Bucket": "mayankdemo1-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/silhouette-of-a-man.jpg"
 },
 "OverallResult" : {
@@ -16,7 +16,7 @@
 
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
+  	"Bucket": "mayankdemo1-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/Les_Twins_profile.jpg"
 },
 "OverallResult" : {
@@ -30,8 +30,8 @@
 
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
-    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/baby-tears.jpg"
+  	"Bucket": "mayankdemo1-us-west-2",
+    "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/Texting-Smiling-Person.jpg"
 },
 "OverallResult" : {
         "Pass" : "True",
@@ -47,7 +47,7 @@
 
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
+  	"Bucket": "mayankdemo1-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/tom-cruise.jpg"
 },
 "OverallResult" : {
@@ -61,7 +61,7 @@
 
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
+  	"Bucket": "mayankdemo1-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/barbie1.jpg"
 },
 "OverallResult" : {
@@ -76,7 +76,7 @@
 
 {
   "Params" : {
-  	"Bucket": "mayankdemo-us-west-2",
+  	"Bucket": "mayankdemo1-us-west-2",
     "Key": "re%3Ainvent2017/RekognitionDemo/InputImages/person1.jpg"
 },
 "OverallResult" : {
