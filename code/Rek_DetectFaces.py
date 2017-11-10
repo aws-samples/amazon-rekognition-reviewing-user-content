@@ -52,6 +52,13 @@ def detect_faces(bucket, key, inputParams):
             # print ('Gender of Face = {}'.format(faceDetail['Gender']['Value']))
             DetectFacesResult['ErrorMessages'].append(
                 'Gender of Face = {}'.format(faceDetail['Gender']['Value']))
+        # Check for age range
+        ageRange = faceDetail.get('AgeRange')
+        if(ageRange is not None and int(str(ageRange['High'])) <= 18):
+            # print ('Face corresponds to a minor')
+            DetectFacesResult['Pass'] = False
+            DetectFacesResult['ErrorMessages'].append('Face corresponds to a minor.')
+        
         # Check for pose
         pose = faceDetail.get('Pose')
         if(pose is not None and (Decimal(str(pose['Pitch'])) <= -20 or Decimal(str(pose['Pitch'])) >= 20 or Decimal(str(pose['Roll'])) <= -20 or Decimal(str(pose['Roll'])) >= 20 or Decimal(str(pose['Yaw'])) <= -20 or Decimal(str(pose['Yaw'])) >= 20)):
@@ -66,7 +73,7 @@ def detect_faces(bucket, key, inputParams):
     inputParams['OverallResult']['Details'].append(DetectFacesResult)
     inputParams['OverallResult']['Pass'] = inputParams['OverallResult']['Pass'] and DetectFacesResult['Pass'] 
     if (DetectFacesResult['Pass'] is False):
-        inputParams['OverallResult']['Reason'] = 'NO_FACE_DETECTED'
+        inputParams['OverallResult']['Reason'] = 'FACIAL_ANALYSIS_FAILURE'
     else:
         inputParams['OverallResult']['Reason'] = ''
 
