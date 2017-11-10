@@ -54,7 +54,7 @@ def detect_faces(bucket, key, inputParams):
                 'Gender of Face = {}'.format(faceDetail['Gender']['Value']))
         # Check for age range
         ageRange = faceDetail.get('AgeRange')
-        if(ageRange is not None and int(str(ageRange['High'])) <= 18):
+        if(ageRange is not None and int(str(ageRange['Low'])) <= 18):
             # print ('Face corresponds to a minor')
             DetectFacesResult['Pass'] = False
             DetectFacesResult['ErrorMessages'].append('Face corresponds to a minor.')
