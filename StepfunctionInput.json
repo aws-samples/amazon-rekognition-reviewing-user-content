@@ -62,7 +62,7 @@
 {
   "Params" : {
   	"Bucket": "mayankdemo1-us-west-2",
-    "Key": "reInvent2017/RekognitionDemo/InputImages/fadi.jpg"
+    "Key": "reInvent2017/RekognitionDemo/InputImages/person3.jpg"
 },
 "OverallResult" : {
         "Pass" : "True",
