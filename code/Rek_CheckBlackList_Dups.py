@@ -17,41 +17,6 @@ blacklist_prefix = urllib.unquote_plus(os.environ['BLACKLIST_PREFIX'].encode('ut
 # --------------- Helper Functions to call Rekognition APIs ------------------
 
 
-def create_collections():
-
-    doesBlackListImagesExist = False
-    doesImageListExist = False
-
-    # Get all the collections
-    response = rekognition.list_collections(MaxResults=100)
-
-    for collectionId in response['CollectionIds']:
-        if(collectionId == 'BlackListImages'):
-            doesBlackListImagesExist = True
-        if(collectionId == 'ImageList'):
-            doesImageListExist = True
-       
-    # Create a blacklist collection
-    if not doesBlackListImagesExist:
-        print('Creating collection : BlackListImages...')
-        rekognition.create_collection(CollectionId='BlackListImages')
-        # Add BlackList Images
-        print('Adding BlackList Images..')
-        imageList = s3.list_objects_v2(
-            Bucket=blacklist_bucket, Prefix=blacklist_prefix)
-        #print(imageList)
-        for image in imageList['Contents']:
-            if(image['Size'] == 0):
-                continue
-            print('Adding ' + image['Key'])
-            rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
-                "Bucket": blacklist_bucket, "Name": image['Key']}})
-
-    # Create a image collection
-    if not doesImageListExist:
-        print('Creating collection : ImageList')
-        rekognition.create_collection(CollectionId='ImageList')
-    return None
 
 
 def check_Blacklist_Duplicates(bucket, key, inputParams):
@@ -99,6 +64,41 @@ def check_Blacklist_Duplicates(bucket, key, inputParams):
 
     return inputParams
 
+def create_collections():
+
+    doesBlackListImagesExist = False
+    doesImageListExist = False
+
+    # Get all the collections
+    response = rekognition.list_collections(MaxResults=100)
+
+    for collectionId in response['CollectionIds']:
+        if(collectionId == 'BlackListImages'):
+            doesBlackListImagesExist = True
+        if(collectionId == 'ImageList'):
+            doesImageListExist = True
+       
+    # Create a blacklist collection
+    if not doesBlackListImagesExist:
+        print('Creating collection : BlackListImages...')
+        rekognition.create_collection(CollectionId='BlackListImages')
+        # Add BlackList Images
+        print('Adding BlackList Images..')
+        imageList = s3.list_objects_v2(
+            Bucket=blacklist_bucket, Prefix=blacklist_prefix)
+        #print(imageList)
+        for image in imageList['Contents']:
+            if(image['Size'] == 0):
+                continue
+            print('Adding ' + image['Key'])
+            rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
+                "Bucket": blacklist_bucket, "Name": image['Key']}})
+
+    # Create a image collection
+    if not doesImageListExist:
+        print('Creating collection : ImageList')
+        rekognition.create_collection(CollectionId='ImageList')
+    return None
 
 # --------------- Main handler ------------------
 
