@@ -18,3 +18,9 @@ code/urllib3/
 code/requests_aws4auth-0.9.dist-info/
 code/requests_aws4auth/
 code/Rek_demo_output.yaml
+code/elasticsearch-6.0.0.dist-info/
+code/elasticsearch5/
+code/*.rst
+code/NOTICE
+code/LICENSE
+
