@@ -30,7 +30,7 @@ This code depends on a bunch of libraries (not included in this distribution) wh
 
 1. Download the contents of this repository on your local machine (say: project-directory)
 2. The solution is implemented in python, so make sure you have a working python environment on your local machine.
-3. Open a command prompt, navigate to the project directory and install the following libraries in the same directory (project-directory)
+3. Open a command prompt, navigate to the project directory. Navigate to the /code sub directory and install the following libraries: 
     1. ```bash
         pip install requests_aws4auth --target .
         ```
@@ -51,7 +51,7 @@ This code depends on a bunch of libraries (not included in this distribution) wh
     1. ```bash 
         aws cloudformation deploy --template-file Rek_demo_output.yaml --stack-name RekDemoStack --capabilities CAPABILITY_IAM --region us-west-2
         ```
-8. If you want to make changes to the Lambda functions, you can do so on your local machine and redeploy them using the steps 6 and 7 above. The package and deploy commands take care of zipping up the new Lambda files and uploading them to AWS for execution.
+8. If you want to make changes to the Lambda functions, you can do so on your local machine and redeploy them using the steps 6 and 7 above. The package and deploy commands take care of zipping up the new Lambda files(along with the dependencies) and uploading them to AWS for execution.
 
 
 ## Outputs
