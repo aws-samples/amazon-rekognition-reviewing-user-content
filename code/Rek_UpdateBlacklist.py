@@ -15,7 +15,7 @@ s3 = boto3.client('s3')
 # --------------- Helper Functions to call Rekognition APIs ------------------
 
 
-def add_image_to_Collection(bucket, key):
+def add_image_to_Collection(bucket, key, prefix):
 
     doesBlackListImagesExist = False
 
@@ -33,19 +33,21 @@ def add_image_to_Collection(bucket, key):
         # Since the collection did not exist, add the existing images from the blacklist bucket, to the blacklist image collection
         #print('Adding BlackList Images')
         imageList = s3.list_objects_v2(
-            Bucket=bucket, Prefix=key)
-        # print(imageList)
-        for image in imageList['Contents']:
-            if(image['Size'] == 0):
-                continue
-            print('Adding ' + bucket + '/' + image['Key'])
-            rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
-                "Bucket": bucket, "Name": image['Key']}})
-
-    # Now add the image which fired the Lambda function.
-    print('Adding ' + bucket + '/' + key)
-    rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
-        "Bucket": bucket, "Name": key}})
+            Bucket=bucket, Prefix=prefix)
+        #print(json.dumps(imageList,indent=4, separators=(',', ': ')))
+        #print(imageList)
+        if imageList['Contents'] is not None: 
+            for image in imageList['Contents']:
+                if(image['Size'] == 0):
+                    continue
+                print('Adding ' + bucket + '/' + image['Key'])
+                rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
+                    "Bucket": bucket, "Name": image['Key']}})
+    else:
+        # Just add the image which fired the Lambda function.
+        print('Adding ' + bucket + '/' + key)
+        rekognition.index_faces(CollectionId='BlackListImages', Image={"S3Object": {
+            "Bucket": bucket, "Name": key}})
 
     return None
 
@@ -60,17 +62,18 @@ def lambda_handler(event, context):
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.unquote_plus(
         event['Records'][0]['s3']['object']['key'].encode('utf8'))
+    prefix = key[:key.rfind('/')]    
     try:
 
-        try:
-            # delete collections.
-            rekognition.delete_collection(CollectionId ='BlackListImages')
-        except Exception as e: 
-            print ('Error deleting collections.')
+        # try:
+        #     # delete collections. REMOVE IN PROD.
+        #     rekognition.delete_collection(CollectionId ='BlackListImages')
+        # except Exception as e: 
+        #     print ('Error deleting collections.')
 
 
         # Create image collections.
-        add_image_to_Collection(bucket, key)
+        add_image_to_Collection(bucket, key, prefix)
 
         # Print response to console.
         # print(response)
