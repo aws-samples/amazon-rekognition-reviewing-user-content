@@ -1,6 +1,6 @@
-# Amazon Rekognition Policing User Content
+# Amazon Rekognition Filtering User Content
 
-A Stepfunctions driven workflow to use Amazon Rekognition to scan incoming images through a set of business rules and police apply policing, using AWS services like Amazon Rekognition, AWS Step Functions, Amazon DynamoDB and AWS Lambda. 
+A Stepfunctions driven workflow to use Amazon Rekognition to scan incoming images through a set of business rules and apply filtering, using AWS services like Amazon Rekognition, AWS Step Functions, Amazon DynamoDB and AWS Lambda. 
 
 # Solution Architecture
 
